@@ -1,0 +1,41 @@
+{
+  "name": "oib-deployer",
+  "version": "1.0.0",
+  "description": "Deploy OpenIntuneBaseline policies to Microsoft Intune tenants",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "intune",
+    "microsoft",
+    "policy",
+    "deployment",
+    "openintunebaseline",
+    "baseline"
+  ],
+  "author": "James Robinson (SkipToTheEndpoint)",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/msal-browser": "^2.38.3",
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "terser": "^5.43.1",
+    "vite": "^7.0.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SkipToTheEndpoint/OIBDeployer"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
