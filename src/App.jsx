@@ -72,20 +72,11 @@ function App() {
       setIsLoading(true);
       setError(null);
       
-      const account = await authService.login();
-      const tenantId = authService.getTenantId();
-      const tenantInfo = authService.getTenantInfo();
+      // With redirect flow, this will redirect the page
+      await authService.login();
       
-      setIsAuthenticated(true);
-      setAccount(account);
-      setTenantId(tenantId);
-      setTenantInfo(tenantInfo);
-      setCurrentStep('select');
-      
-      console.log('Connected to tenant:', tenantId);
-      console.log('Tenant info:', tenantInfo);
-      
-      await loadExistingPolicies();
+      // The following code will only execute if there's an error
+      // On successful redirect, the page will reload and initialization will handle auth state
     } catch (error) {
       console.error('Login failed:', error);
       setError('Login failed: ' + error.message);
@@ -96,16 +87,11 @@ function App() {
 
   const handleLogout = async () => {
     try {
+      // With redirect flow, this will redirect the page and clear all state
       await authService.logout();
-      setIsAuthenticated(false);
-      setAccount(null);
-      setTenantId(null);
-      setTenantInfo(null);
-      setCurrentStep('auth');
-      setExistingPolicies([]);
-      setSelectedPolicies([]);
-      setDeploymentResults([]);
-      setError(null);
+      
+      // The following code will only execute if there's an error
+      // On successful redirect, the page will reload to initial state
     } catch (error) {
       console.error('Logout failed:', error);
       setError('Logout failed: ' + error.message);

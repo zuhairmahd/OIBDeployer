@@ -31,11 +31,14 @@ class AuthService {
             const response = await this.msalInstance.handleRedirectPromise();
             if (response && response.account) {
                 this.account = response.account;
+                console.log('Authentication successful after redirect');
             } else {
                 // Try to get account from cache
                 const accounts = this.msalInstance.getAllAccounts();
                 if (accounts.length > 0) {
                     this.account = accounts[0];
+                    this.msalInstance.setActiveAccount(this.account);
+                    console.log('Account found in cache');
                 }
             }
         } catch (error) {
@@ -50,12 +53,10 @@ class AuthService {
         }
 
         try {
-            const response = await this.msalInstance.loginPopup({
+            // Use redirect flow instead of popup to avoid popup issues
+            await this.msalInstance.loginRedirect({
                 scopes: CONFIG.msal.scopes
             });
-            
-            this.account = response.account;
-            return this.account;
         } catch (error) {
             console.error('Login failed:', error);
             throw new Error('Login failed: ' + error.message);
@@ -66,7 +67,7 @@ class AuthService {
         if (!this.isInitialized) return;
 
         try {
-            await this.msalInstance.logoutPopup({
+            await this.msalInstance.logoutRedirect({
                 account: this.account
             });
             this.account = null;
@@ -89,13 +90,14 @@ class AuthService {
             
             return response.accessToken;
         } catch (error) {
-            // Try interactive token acquisition
+            // Try interactive token acquisition using redirect
             try {
-                const response = await this.msalInstance.acquireTokenPopup({
+                await this.msalInstance.acquireTokenRedirect({
                     scopes: CONFIG.msal.scopes,
                     account: this.account
                 });
-                return response.accessToken;
+                // After redirect, this will be handled by handleRedirectPromise
+                return null;
             } catch (interactiveError) {
                 console.error('Token acquisition failed:', interactiveError);
                 throw new Error('Failed to acquire access token');
