@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Settings, CheckCircle, AlertCircle, Loader, BookOpen } from 'lucide-react';
+import { Upload, Settings, CheckCircle, AlertCircle, Loader, BookOpen, ArrowLeft } from 'lucide-react';
 import AuthComponent from './components/AuthComponent';
 import PolicySelector from './components/PolicySelector';
+import FilteredPolicySelector from './components/FilteredPolicySelector';
 import DeploymentProgress from './components/DeploymentProgress';
 import StatusPanel from './components/StatusPanel';
 import Documentation from './components/Documentation';
 import DeploymentResultsModal from './components/DeploymentResultsModal';
+import DeploymentTypeWizard from './components/DeploymentTypeWizard';
+import QuickDeployWizard from './components/QuickDeployWizard';
+import ComparisonDashboard from './components/ComparisonDashboard';
+import OSSelectionWizard from './components/OSSelectionWizard';
 import authService from './utils/auth';
 import graphAPI from './utils/graph-api';
 import githubAPI from './utils/github-api';
@@ -35,6 +40,14 @@ function App() {
     currentStep: 'preparing'
   });
 
+  // New wizard state variables
+  const [deploymentType, setDeploymentType] = useState(null); // 'new' or 'existing'
+  const [selectedPolicyTypes, setSelectedPolicyTypes] = useState([]); // ['compliance', 'endpoint-security', etc.]
+  const [selectedOSTypes, setSelectedOSTypes] = useState([]); // ['WINDOWS', 'MACOS']
+  const [wizardStep, setWizardStep] = useState('deployment-type'); // wizard sub-steps
+  const [availablePolicies, setAvailablePolicies] = useState({});
+  const [latestVersion, setLatestVersion] = useState(null);
+
   useEffect(() => {
     initializeApp();
   }, []);
@@ -53,11 +66,13 @@ function App() {
         setAccount(account);
         setTenantId(tenantId);
         setTenantInfo(tenantInfo);
-        setCurrentStep('select');
+        setCurrentStep('wizard');
+        setWizardStep('deployment-type');
         
         console.log('Already connected to tenant:', tenantId);
         
         await loadExistingPolicies();
+        await loadLatestVersionAndPolicies();
       }
     } catch (error) {
       console.error('Failed to initialize app:', error);
@@ -115,12 +130,177 @@ function App() {
     }
   };
 
+  const loadLatestVersionAndPolicies = async () => {
+    try {
+      console.log('Loading latest OIB version and policies...');
+      
+      // Check session storage first
+      const sessionKey = 'oib-latest-data';
+      const cachedData = sessionStorage.getItem(sessionKey);
+      
+      if (cachedData) {
+        try {
+          const { version, policies, timestamp } = JSON.parse(cachedData);
+          const cacheAge = Date.now() - timestamp;
+          const maxAge = 30 * 60 * 1000; // 30 minutes
+          
+          if (cacheAge < maxAge) {
+            console.log(`Using cached data (age: ${Math.round(cacheAge / 1000)}s)`);
+            setLatestVersion(version);
+            setAvailablePolicies(policies);
+            return;
+          } else {
+            console.log('Cached data expired, fetching fresh data');
+            sessionStorage.removeItem(sessionKey);
+          }
+        } catch (error) {
+          console.warn('Failed to parse cached data, fetching fresh:', error);
+          sessionStorage.removeItem(sessionKey);
+        }
+      }
+      
+      // Fetch fresh data
+      console.log('Fetching fresh data from GitHub API...');
+      
+      // Use main branch instead of releases for latest code
+      const latest = 'main';
+      setLatestVersion('Latest (main branch)');
+      
+      // Load policies for all OS types from main branch
+      const policies = {};
+      const osTypes = ['WINDOWS', 'MACOS'];
+      
+      for (const os of osTypes) {
+        try {
+          const osPolicies = await githubAPI.getPoliciesForOS(os, latest);
+          if (osPolicies && Object.keys(osPolicies).length > 0) {
+            policies[os] = osPolicies;
+          }
+        } catch (error) {
+          console.warn(`Failed to load ${os} policies from main branch:`, error);
+        }
+      }
+      
+      setAvailablePolicies(policies);
+      
+      // Cache the data in session storage
+      const dataToCache = {
+        version: 'Latest (main branch)',
+        policies: policies,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem(sessionKey, JSON.stringify(dataToCache));
+      
+      console.log(`Loaded and cached policies from main branch:`, Object.keys(policies));
+    } catch (error) {
+      console.error('Failed to load latest version and policies:', error);
+      setError('Failed to load latest version information');
+    }
+  };
+
+  // Wizard handler functions
+  const handleDeploymentTypeSelection = (type) => {
+    setDeploymentType(type);
+    if (type === 'new') {
+      setWizardStep('policy-types');
+    } else if (type === 'existing') {
+      setWizardStep('os-selection');
+    }
+  };
+
+  const handleOSSelection = (osTypes) => {
+    setSelectedOSTypes(osTypes);
+    setWizardStep('comparison-dashboard');
+    // Load policies only for selected OS types
+    loadPoliciesForSelectedOS(osTypes);
+  };
+
+  const loadPoliciesForSelectedOS = async (osTypes) => {
+    try {
+      console.log(`Loading policies for selected OS types: ${osTypes.join(', ')}`);
+      
+      // Filter existing available policies or load fresh data for selected OS
+      const filteredPolicies = {};
+      
+      if (availablePolicies && Object.keys(availablePolicies).length > 0) {
+        // Use cached data, filter by selected OS
+        osTypes.forEach(os => {
+          if (availablePolicies[os]) {
+            filteredPolicies[os] = availablePolicies[os];
+          }
+        });
+      } else {
+        // Load fresh data for selected OS only
+        for (const os of osTypes) {
+          try {
+            const osPolicies = await githubAPI.getPoliciesForOS(os, 'main');
+            if (osPolicies && Object.keys(osPolicies).length > 0) {
+              filteredPolicies[os] = osPolicies;
+            }
+          } catch (error) {
+            console.warn(`Failed to load ${os} policies:`, error);
+          }
+        }
+      }
+      
+      setAvailablePolicies(filteredPolicies);
+      console.log(`Loaded policies for selected OS types:`, Object.keys(filteredPolicies));
+    } catch (error) {
+      console.error('Failed to load policies for selected OS:', error);
+      setError('Failed to load policies for selected operating systems');
+    }
+  };
+
+  const handlePolicyTypesSelection = (selection) => {
+    setSelectedPolicyTypes(selection.policyTypes);
+    setSelectedOSTypes(selection.osTypes);
+    setWizardStep('policy-selection');
+    // Filter available policies based on selected types and OS
+    filterPoliciesByTypesAndOS(selection.policyTypes, selection.osTypes);
+  };
+
+  const filterPoliciesByTypesAndOS = (policyTypes, osTypes) => {
+    // Set wizard step to policy selection to stay in wizard flow
+    setWizardStep('policy-selection');
+    // Filter available policies based on selected types and OS
+    // Load only the policies for the selected OS types
+    loadPoliciesForSelectedOS(osTypes);
+  };
+
+  const handleComparisonPolicySelection = (policies) => {
+    setSelectedPolicies(policies);
+    setCurrentStep('deploy');
+  };
+
+  const handleWizardBack = () => {
+    if (wizardStep === 'policy-types') {
+      setWizardStep('deployment-type');
+      setDeploymentType(null);
+    } else if (wizardStep === 'policy-selection') {
+      setWizardStep('policy-types');
+      setSelectedPolicyTypes([]);
+    } else if (wizardStep === 'os-selection') {
+      setWizardStep('deployment-type');
+      setDeploymentType(null);
+    } else if (wizardStep === 'comparison-dashboard') {
+      if (deploymentType === 'existing') {
+        setWizardStep('os-selection');
+        setSelectedOSTypes([]);
+      } else {
+        setWizardStep('deployment-type');
+        setDeploymentType(null);
+      }
+    }
+  };
+
   const handlePolicySelection = (policies) => {
     setSelectedPolicies(policies);
   };
 
-  const handleDeployment = async () => {
-    if (selectedPolicies.length === 0) {
+  const handleDeployment = async (policiesToDeploy = null) => {
+    const policies = policiesToDeploy || selectedPolicies;
+    
+    if (policies.length === 0) {
       setError('Please select at least one policy to deploy');
       return;
     }
@@ -136,11 +316,11 @@ function App() {
         isDeploying: true,
         currentPolicy: '',
         completed: 0,
-        total: selectedPolicies.length,
+        total: policies.length,
         currentStep: 'preparing'
       });
 
-      console.log(`Starting deployment of ${selectedPolicies.length} policies...`);
+      console.log(`Starting deployment of ${policies.length} policies...`);
 
       // Update progress for policy preparation
       setDeploymentProgress(prev => ({
@@ -151,7 +331,7 @@ function App() {
 
       // Prepare policies for deployment with content and check existing status
       const policiesWithContent = await Promise.all(
-        selectedPolicies.map(async (policy, index) => {
+        policies.map(async (policy, index) => {
           try {
             // Update progress for current policy being loaded
             setDeploymentProgress(prev => ({
@@ -280,11 +460,21 @@ function App() {
     setDeploymentResults([]);
     setError(null);
     setShowResultsModal(false);
-    // Stay on select step - no need to reload GitHub data
+    setDeploymentType(null);
+    setSelectedPolicyTypes([]);
+    setSelectedOSTypes([]);
+    setCurrentStep('wizard');
+    setWizardStep('deployment-type');
   };
 
   const handleRefreshPolicies = async () => {
     await loadExistingPolicies();
+  };
+
+  const handleRefreshGitHubData = async () => {
+    // Clear session cache and reload
+    sessionStorage.removeItem('oib-latest-data');
+    await loadLatestVersionAndPolicies();
   };
 
   return (
@@ -368,6 +558,70 @@ function App() {
 
         {showDocumentation && (
           <Documentation onBack={() => setShowDocumentation(false)} />
+        )}
+
+        {/* Wizard Components */}
+        {isAuthenticated && !showDocumentation && currentStep === 'wizard' && wizardStep === 'deployment-type' && (
+          <DeploymentTypeWizard 
+            onSelectType={handleDeploymentTypeSelection}
+          />
+        )}
+
+        {isAuthenticated && !showDocumentation && currentStep === 'wizard' && wizardStep === 'policy-types' && (
+          <QuickDeployWizard 
+            onPolicyTypesSelected={handlePolicyTypesSelection}
+            onBack={handleWizardBack}
+            selectedVersion={latestVersion}
+          />
+        )}
+
+        {isAuthenticated && !showDocumentation && currentStep === 'wizard' && wizardStep === 'os-selection' && (
+          <OSSelectionWizard 
+            onOSSelected={handleOSSelection}
+            onBack={handleWizardBack}
+            selectedVersion={latestVersion}
+          />
+        )}
+
+        {isAuthenticated && !showDocumentation && currentStep === 'wizard' && wizardStep === 'comparison-dashboard' && (
+          <ComparisonDashboard 
+            existingPolicies={existingPolicies}
+            availablePolicies={availablePolicies}
+            onSelectPolicies={handleComparisonPolicySelection}
+            onBack={handleWizardBack}
+            onRefresh={handleRefreshGitHubData}
+            isLoading={isLoading}
+            selectedVersion={latestVersion}
+          />
+        )}
+
+        {isAuthenticated && !showDocumentation && currentStep === 'wizard' && wizardStep === 'policy-selection' && (
+          <div className="main-content">
+            <div className="wizard-container">
+              <div className="wizard-header">
+                <h2>Select Policies to Deploy</h2>
+                <p>Choose individual policies from your selected types: {selectedPolicyTypes.join(', ')}</p>
+                <p>For OS types: {selectedOSTypes.join(', ')}</p>
+                {latestVersion && (
+                  <div className="version-info">
+                    <span className="version-badge">Version: {latestVersion}</span>
+                  </div>
+                )}
+              </div>
+              
+              <FilteredPolicySelector
+                existingPolicies={existingPolicies}
+                onPolicySelection={handlePolicySelection}
+                availablePolicies={availablePolicies}
+                selectedPolicyTypes={selectedPolicyTypes}
+                selectedOSTypes={selectedOSTypes}
+                selectedVersion={latestVersion}
+                onBack={handleWizardBack}
+                onDeploy={handleDeployment}
+                isLoading={isLoading}
+              />
+            </div>
+          </div>
         )}
 
         {isAuthenticated && !showDocumentation && currentStep === 'select' && (

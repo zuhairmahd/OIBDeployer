@@ -188,7 +188,8 @@ class GitHubAPI {
             // Filter and organize by OS
             const structure = {
                 WINDOWS: { directories: [], files: [] },
-                MACOS: { directories: [], files: [] }
+                MACOS: { directories: [], files: [] },
+                BYOD: { directories: [], files: [] }
             };
             
             tree.tree.forEach(item => {
@@ -223,6 +224,12 @@ class GitHubAPI {
     // Determine policy type from path
     determinePolicyType(path) {
         const pathLower = path.toLowerCase();
+        
+        // Handle BYOD-specific policies
+        if (pathLower.includes('byod')) {
+            if (pathLower.includes('appprotection') || pathLower.includes('app-protection')) return 'AppProtectionPolicies';
+            return 'BYODPolicies';
+        }
         
         if (pathLower.includes('compliancepolicies')) return 'CompliancePolicies';
         if (pathLower.includes('settingscatalog')) return 'SettingsCatalog';
