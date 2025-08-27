@@ -77,8 +77,6 @@ const Documentation = ({ onBack }) => {
             <p>You need the following Microsoft Graph API permissions in your Azure AD tenant:</p>
             <ul>
               <li><code>DeviceManagementConfiguration.ReadWrite.All</code></li>
-              <li><code>DeviceManagementManagedDevices.ReadWrite.All</code></li>
-              <li><code>DeviceManagementServiceConfig.ReadWrite.All</code></li>
             </ul>
             <p>Your account must also have appropriate Intune administrator roles.</p>
           </div>

@@ -6,9 +6,7 @@ export const CONFIG = {
         authority: 'https://login.microsoftonline.com/common', // Multi-tenant
         redirectUri: window.location.origin, // Dynamic redirect URI
         scopes: [
-            'https://graph.microsoft.com/DeviceManagementConfiguration.ReadWrite.All',
-            'https://graph.microsoft.com/DeviceManagementManagedDevices.ReadWrite.All',
-            'https://graph.microsoft.com/DeviceManagementServiceConfig.ReadWrite.All'
+            'https://graph.microsoft.com/DeviceManagementConfiguration.ReadWrite.All'
         ]
     },
 

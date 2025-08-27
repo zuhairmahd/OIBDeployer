@@ -31,8 +31,6 @@ const AuthComponent = ({ onLogin, isLoading, tenantInfo }) => {
               <h4>Required Permissions:</h4>
               <ul>
                 <li>DeviceManagementConfiguration.ReadWrite.All</li>
-                <li>DeviceManagementManagedDevices.ReadWrite.All</li>
-                <li>DeviceManagementServiceConfig.ReadWrite.All</li>
               </ul>
             </div>
           </div>
