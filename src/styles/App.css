@@ -2919,8 +2919,8 @@ p, h1, h2, h3, h4, h5, h6 {
 .hero-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 0 2rem 6rem; /* Removed top padding to blend with header */
-  min-height: calc(100vh - 80px); /* Account for header height */
+  padding: 4rem 2rem 6rem; /* Added top padding, reduced bottom */
+  min-height: 600px; /* Changed from calc(100vh - 80px) to fixed height */
   display: flex;
   align-items: center;
   position: relative;
@@ -3308,6 +3308,9 @@ p, h1, h2, h3, h4, h5, h6 {
 .cta-content {
   max-width: 600px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .cta-content h2 {
@@ -3363,8 +3366,8 @@ p, h1, h2, h3, h4, h5, h6 {
 
 @media (max-width: 768px) {
   .hero-section {
-    padding: 0 1rem 4rem; /* Removed top padding for mobile too */
-    min-height: calc(100vh - 70px); /* Account for smaller mobile header */
+    padding: 3rem 1rem 4rem; /* Added top padding for mobile */
+    min-height: 500px; /* Changed from calc(100vh - 70px) to fixed height */
   }
   
   .hero-title {
