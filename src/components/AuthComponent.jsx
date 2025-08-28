@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, Shield, Lock } from 'lucide-react';
+import { Shield, Lock } from 'lucide-react';
 
 const AuthComponent = ({ onLogin, isLoading, tenantInfo }) => {
   return (
@@ -8,7 +8,7 @@ const AuthComponent = ({ onLogin, isLoading, tenantInfo }) => {
         <div className="auth-header">
           <Shield className="auth-icon" />
           <h2>Microsoft Intune Authentication</h2>
-          <p>Sign in with your Microsoft account to deploy OpenIntuneBaseline policies</p>
+          <p>Sign in with your work or school account to deploy OpenIntuneBaseline policies</p>
           {tenantInfo && (
             <div className="current-tenant">
               <p><strong>Current Tenant:</strong> {tenantInfo.tenantId}</p>
@@ -38,10 +38,13 @@ const AuthComponent = ({ onLogin, isLoading, tenantInfo }) => {
           <button 
             onClick={onLogin} 
             disabled={isLoading}
-            className="btn btn-primary btn-large"
+            className="ms-signin-btn"
           >
-            <LogIn className="btn-icon" />
-            {isLoading ? 'Signing in...' : 'Sign in with Microsoft'}
+            <img 
+              src="/ms-symbol_signin_light.svg" 
+              alt="Sign in with Microsoft" 
+              className="ms-signin-svg"
+            />
           </button>
 
           <div className="auth-footer">
