@@ -313,6 +313,44 @@ const PolicySelector = ({ existingPolicies, onPolicySelection, onDeploy, isLoadi
     setSelectedPolicies(newSelectedPolicies);
   };
 
+  const handleGlobalSelectAll = () => {
+    const updatedPolicies = { ...availablePolicies };
+    
+    // Get all currently filtered policies across all types
+    const allFilteredPolicies = [];
+    Object.entries(updatedPolicies).forEach(([policyType, policies]) => {
+      const filteredPolicies = getFilteredPolicies(policies);
+      allFilteredPolicies.push(...filteredPolicies);
+    });
+    
+    // Check if all filtered policies are selected
+    const areAllSelected = allFilteredPolicies.every(policy => policy.selected);
+    
+    // Toggle selection for all filtered policies
+    Object.entries(updatedPolicies).forEach(([policyType, policies]) => {
+      const filteredPolicies = getFilteredPolicies(policies);
+      policies.forEach(policy => {
+        if (filteredPolicies.includes(policy)) {
+          policy.selected = !areAllSelected;
+        }
+      });
+    });
+    
+    setAvailablePolicies(updatedPolicies);
+    
+    // Update selected policies list
+    const newSelectedPolicies = [];
+    Object.values(updatedPolicies).forEach(typeGroup => {
+      typeGroup.forEach(policy => {
+        if (policy.selected) {
+          newSelectedPolicies.push(policy);
+        }
+      });
+    });
+    
+    setSelectedPolicies(newSelectedPolicies);
+  };
+
   const getFilteredPolicies = (policies) => {
     return policies.filter(policy => {
       const matchesSearch = policy.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
@@ -494,6 +532,29 @@ const PolicySelector = ({ existingPolicies, onPolicySelection, onDeploy, isLoadi
             </select>
           </div>
         </div>
+
+        {Object.keys(availablePolicies).length > 0 && (
+          <div className="global-controls">
+            <button
+              onClick={handleGlobalSelectAll}
+              className="btn btn-outline btn-small global-select-all"
+            >
+              {(() => {
+                // Check if all filtered policies across all types are selected
+                const allFilteredPolicies = [];
+                Object.entries(availablePolicies).forEach(([policyType, policies]) => {
+                  const filteredPolicies = getFilteredPolicies(policies);
+                  allFilteredPolicies.push(...filteredPolicies);
+                });
+                const areAllSelected = allFilteredPolicies.length > 0 && allFilteredPolicies.every(policy => policy.selected);
+                return areAllSelected ? 'Deselect All Policies' : 'Select All Policies';
+              })()}
+            </button>
+            <span className="selected-count">
+              {selectedPolicies.length} policies selected
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="policies-container">

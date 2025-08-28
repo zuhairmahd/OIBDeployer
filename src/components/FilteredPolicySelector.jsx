@@ -160,6 +160,56 @@ const FilteredPolicySelector = ({
     onPolicySelection(updatedSelected);
   };
 
+  const handleGlobalSelectAll = () => {
+    const allFilteredPolicies = getFilteredPolicies();
+    
+    // Check if all filtered policies are selected
+    const areAllSelected = allFilteredPolicies.length > 0 && 
+      allFilteredPolicies.every(policy => {
+        const policyKey = `${policy.osType}-${policy.policyType}-${policy.name}`;
+        return selectedPolicies.some(p => `${p.osType}-${p.policyType}-${p.name}` === policyKey);
+      });
+
+    if (areAllSelected) {
+      // Deselect all filtered policies
+      const filteredKeys = allFilteredPolicies.map(p => `${p.osType}-${p.policyType}-${p.name}`);
+      const updatedSelected = selectedPolicies.filter(p => 
+        !filteredKeys.includes(`${p.osType}-${p.policyType}-${p.name}`)
+      );
+      
+      // Update processedPolicies to reflect deselection
+      const updatedPolicies = { ...processedPolicies };
+      allFilteredPolicies.forEach(policy => {
+        const targetPolicy = updatedPolicies[policy.osType][policy.policyType].find(p => p.name === policy.name);
+        if (targetPolicy) {
+          targetPolicy.selected = false;
+        }
+      });
+      
+      setSelectedPolicies(updatedSelected);
+      onPolicySelection(updatedSelected);
+    } else {
+      // Select all filtered policies that aren't already selected
+      const newSelections = allFilteredPolicies.filter(policy => {
+        const policyKey = `${policy.osType}-${policy.policyType}-${policy.name}`;
+        return !selectedPolicies.some(p => `${p.osType}-${p.policyType}-${p.name}` === policyKey);
+      });
+      
+      // Update processedPolicies to reflect selection
+      const updatedPolicies = { ...processedPolicies };
+      allFilteredPolicies.forEach(policy => {
+        const targetPolicy = updatedPolicies[policy.osType][policy.policyType].find(p => p.name === policy.name);
+        if (targetPolicy) {
+          targetPolicy.selected = true;
+        }
+      });
+      
+      const updatedSelected = [...selectedPolicies, ...newSelections.map(p => ({ ...p, selected: true }))];
+      setSelectedPolicies(updatedSelected);
+      onPolicySelection(updatedSelected);
+    }
+  };
+
   const filteredPolicies = getFilteredPolicies();
   const selectedCount = selectedPolicies.length;
   const newPoliciesCount = filteredPolicies.filter(p => p.status === 'new').length;
@@ -228,6 +278,28 @@ const FilteredPolicySelector = ({
           <span className="stat-value selected">{selectedCount}</span>
         </div>
       </div>
+
+      {/* Global Controls */}
+      {filteredPolicies.length > 0 && (
+        <div className="global-controls">
+          <button
+            onClick={handleGlobalSelectAll}
+            className="btn btn-outline btn-small global-select-all"
+          >
+            {(() => {
+              const areAllSelected = filteredPolicies.length > 0 && 
+                filteredPolicies.every(policy => {
+                  const policyKey = `${policy.osType}-${policy.policyType}-${policy.name}`;
+                  return selectedPolicies.some(p => `${p.osType}-${p.policyType}-${p.name}` === policyKey);
+                });
+              return areAllSelected ? 'Deselect All Policies' : 'Select All Policies';
+            })()}
+          </button>
+          <span className="selected-count">
+            {selectedCount} policies selected
+          </span>
+        </div>
+      )}
 
       {/* Policies List - Grouped by OS and Policy Type */}
       <div className="policies-container">

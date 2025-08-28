@@ -209,6 +209,47 @@ const ComparisonDashboard = ({
     }
   };
 
+  const handleGlobalSelectAll = () => {
+    // Get all currently filtered policies across all OS types
+    const allFilteredPolicies = [];
+    Object.entries(comparisonData.byOS).forEach(([osType, osData]) => {
+      const getOSFilteredPolicies = () => {
+        switch (viewFilter) {
+          case 'new':
+            return osData.missing || [];
+          case 'outdated':
+            return osData.outdated || [];
+          case 'newer':
+            return osData.newer || [];
+          case 'current':
+            return osData.current || [];
+          default:
+            return [...(osData.missing || []), ...(osData.outdated || []), ...(osData.newer || [])];
+        }
+      };
+      allFilteredPolicies.push(...getOSFilteredPolicies());
+    });
+
+    // Check if all filtered policies are selected
+    const areAllSelected = allFilteredPolicies.length > 0 && 
+      allFilteredPolicies.every(policy => selectedForDeployment.some(p => p.name === policy.name));
+
+    if (areAllSelected) {
+      // Deselect all filtered policies
+      setSelectedForDeployment(prev => 
+        prev.filter(selected => !allFilteredPolicies.some(filtered => filtered.name === selected.name))
+      );
+    } else {
+      // Select all filtered policies that aren't already selected
+      setSelectedForDeployment(prev => {
+        const newSelections = allFilteredPolicies.filter(
+          filtered => !prev.some(selected => selected.name === filtered.name)
+        );
+        return [...prev, ...newSelections];
+      });
+    }
+  };
+
   if (!comparisonData) {
     return (
       <div className="wizard-container">
@@ -303,6 +344,44 @@ const ComparisonDashboard = ({
         >
           Newer Than Latest ({comparisonData.totals.newer})
         </button>
+      </div>
+
+      {/* Global Selection Controls */}
+      <div className="global-controls">
+        <button
+          onClick={handleGlobalSelectAll}
+          className="btn btn-outline btn-small global-select-all"
+        >
+          {(() => {
+            // Get all currently filtered policies
+            const allFilteredPolicies = [];
+            Object.entries(comparisonData.byOS).forEach(([osType, osData]) => {
+              const getOSFilteredPolicies = () => {
+                switch (viewFilter) {
+                  case 'new':
+                    return osData.missing || [];
+                  case 'outdated':
+                    return osData.outdated || [];
+                  case 'newer':
+                    return osData.newer || [];
+                  case 'current':
+                    return osData.current || [];
+                  default:
+                    return [...(osData.missing || []), ...(osData.outdated || []), ...(osData.newer || [])];
+                }
+              };
+              allFilteredPolicies.push(...getOSFilteredPolicies());
+            });
+            
+            const areAllSelected = allFilteredPolicies.length > 0 && 
+              allFilteredPolicies.every(policy => selectedForDeployment.some(p => p.name === policy.name));
+            
+            return areAllSelected ? 'Deselect All Policies' : 'Select All Policies';
+          })()}
+        </button>
+        <span className="selected-count">
+          {selectedForDeployment.length} policies selected
+        </span>
       </div>
 
       {/* Policy List */}
