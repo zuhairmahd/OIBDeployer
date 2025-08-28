@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Settings, CheckCircle, AlertCircle, Loader, BookOpen, ArrowLeft } from 'lucide-react';
+import Homepage from './components/Homepage';
 import AuthComponent from './components/AuthComponent';
 import PolicySelector from './components/PolicySelector';
 import FilteredPolicySelector from './components/FilteredPolicySelector';
@@ -29,7 +30,7 @@ function App() {
   const [deploymentResults, setDeploymentResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentStep, setCurrentStep] = useState('auth');
+  const [currentStep, setCurrentStep] = useState('homepage');
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [deploymentProgress, setDeploymentProgress] = useState({
@@ -51,6 +52,23 @@ function App() {
   useEffect(() => {
     initializeApp();
   }, []);
+
+  // Update page title based on current step
+  useEffect(() => {
+    switch (currentStep) {
+      case 'homepage':
+        document.title = 'OIB Deployer - Deploy OpenIntuneBaseline Security Policies to Microsoft Intune';
+        break;
+      case 'auth':
+        document.title = 'OIB Deployer - Sign In to Microsoft Intune';
+        break;
+      case 'wizard':
+        document.title = 'OIB Deployer - OpenIntuneBaseline Policy Deployment Wizard';
+        break;
+      default:
+        document.title = 'OIB Deployer - OpenIntuneBaseline Policy Deployment Tool';
+    }
+  }, [currentStep]);
 
   const initializeApp = async () => {
     try {
@@ -98,6 +116,15 @@ function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGetStarted = () => {
+    setCurrentStep('auth');
+  };
+
+  const handleBackToHomepage = () => {
+    setCurrentStep('homepage');
+    setShowDocumentation(false);
   };
 
   const handleLogout = async () => {
@@ -478,7 +505,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app app-step-${currentStep}`}>
       <header className="app-header">
         <div className="header-content">
           <div className="logo">
@@ -486,8 +513,29 @@ function App() {
             <h1>OIB Deployer</h1>
           </div>
           
-          {!isAuthenticated && (
+          {currentStep === 'homepage' && !isAuthenticated && (
             <div className="nav-buttons">
+              <button 
+                onClick={() => setShowDocumentation(!showDocumentation)} 
+                className="nav-btn"
+                title="Documentation & FAQ"
+              >
+                <BookOpen size={16} />
+                {showDocumentation ? 'Back to Home' : 'Help & FAQ'}
+              </button>
+            </div>
+          )}
+          
+          {!isAuthenticated && currentStep !== 'homepage' && (
+            <div className="nav-buttons">
+              <button 
+                onClick={handleBackToHomepage}
+                className="nav-btn"
+                title="Back to Homepage"
+              >
+                <ArrowLeft size={16} />
+                Home
+              </button>
               <button 
                 onClick={() => setShowDocumentation(!showDocumentation)} 
                 className="nav-btn"
@@ -541,6 +589,14 @@ function App() {
           </div>
         )}
 
+        {/* Homepage */}
+        {currentStep === 'homepage' && !showDocumentation && (
+          <Homepage 
+            onGetStarted={handleGetStarted}
+            onViewDocumentation={() => setShowDocumentation(true)}
+          />
+        )}
+
         {isLoading && currentStep === 'auth' && (
           <div className="loading-screen">
             <Loader className="spinner" />
@@ -548,7 +604,7 @@ function App() {
           </div>
         )}
 
-        {!isAuthenticated && !isLoading && !showDocumentation && (
+        {currentStep === 'auth' && !isAuthenticated && !isLoading && !showDocumentation && (
           <AuthComponent 
             onLogin={handleLogin} 
             isLoading={isLoading} 
@@ -557,7 +613,14 @@ function App() {
         )}
 
         {showDocumentation && (
-          <Documentation onBack={() => setShowDocumentation(false)} />
+          <Documentation 
+            onBack={() => {
+              setShowDocumentation(false);
+              if (currentStep === 'homepage') {
+                // Stay on homepage when coming from homepage
+              }
+            }} 
+          />
         )}
 
         {/* Wizard Components */}
@@ -718,14 +781,14 @@ function App() {
               target="_blank" 
               rel="noopener noreferrer"
             >
-              OpenIntuneBaseline Repository
+              GitHub Repository
             </a>
             <a 
-              href="https://github.com/Micke-K/IntuneManagement" 
+              href="https://openintunebaseline.com" 
               target="_blank" 
               rel="noopener noreferrer"
             >
-              IntuneManagement Module
+              OIB Website
             </a>
           </div>
         </div>
