@@ -21,28 +21,30 @@ const Documentation = ({ onBack }) => {
               <span className="step-number">1</span>
               <div className="step-content">
                 <h3>Authentication</h3>
-                <p>Click "Connect to Microsoft" to authenticate with your Azure AD tenant using your Microsoft account.</p>
+                <p>Click "Sign in with Microsoft" to authenticate with your Entra ID tenant using your Microsoft account.</p>
               </div>
             </div>
             <div className="step">
               <span className="step-number">2</span>
               <div className="step-content">
-                <h3>Select Policies</h3>
-                <p>Choose your operating system (Windows/macOS) and version, then select the policies you want to deploy.</p>
+                <h3>Choose Deployment Type</h3>
+                <p>Select "New Deployment" if you're deploying the OIB for the first time.</p>
+                <p>Select "Existing Deployment" if you've already deployed the OIB and want to validate it against the latest version.</p>
               </div>
             </div>
             <div className="step">
               <span className="step-number">3</span>
               <div className="step-content">
-                <h3>Review & Deploy</h3>
-                <p>Review your selected policies and click "Deploy Selected Policies" to deploy them to your Intune tenant.</p>
+                <h3>Select Operating System(s)</h3>
+                <p>Select the operating system(s) you want to deploy (e.g., Windows, macOS).</p>
               </div>
             </div>
             <div className="step">
               <span className="step-number">4</span>
               <div className="step-content">
-                <h3>Monitor Results</h3>
-                <p>View deployment results and any errors that may have occurred during the process.</p>
+                <h3>Deploy or Assess Policies</h3>
+                <p>New: Select the policies you wish to deploy, and deploy them quickly and easily!</p>
+                <p>Existing: Validate your policies against the latest version, and deploy new or updated policies.</p>
               </div>
             </div>
           </div>
@@ -74,18 +76,26 @@ const Documentation = ({ onBack }) => {
 
           <div className="faq-item">
             <h3>What permissions do I need?</h3>
-            <p>You need the following Microsoft Graph API permissions in your Azure AD tenant:</p>
+            <p>The OIB Deployer Enterprise Application only requires you to have access to the following Graph scope via Delegated permissions:</p>
             <ul>
               <li><code>DeviceManagementConfiguration.ReadWrite.All</code></li>
             </ul>
-            <p>Your account must also have appropriate Intune administrator roles.</p>
+            <p>If your account has Intune Administrator role (or higher), this will allow the above.</p>
           </div>
 
           <div className="faq-item">
             <h3>Will this duplicate existing policies?</h3>
             <p>
-              The tool checks for existing policies by name before deployment. If a policy with the same name already exists, 
-              deployment will be skipped for that policy. You can see existing policies in the status panel.
+              The tool checks for existing policies by name before deployment. If a policy with the same name already exists and you select 
+              it anyway, a policy with a duplicate name will be created.
+            </p>
+          </div>
+
+          <div className="faq-item">
+            <h3>Will it assign any policies deployed?</h3>
+            <p>
+              OIB Deployer does not assign any policies after deployment. You will need to manually assign the policies as per OIB guidance
+              to appropriate groups in Intune.
             </p>
           </div>
 
@@ -96,6 +106,9 @@ const Documentation = ({ onBack }) => {
               <p>
                 <strong>Use with caution:</strong> Always test policies in a development or test tenant first. 
                 These are baseline security policies that may impact user experience and device functionality.
+              </p>
+              <p>
+                The OIB was not designed to be assigned to devices previously managed in other ways (e.g. GPO, or using other baseline configurations)
               </p>
             </div>
           </div>
@@ -122,8 +135,8 @@ const Documentation = ({ onBack }) => {
             </p>
             <ul>
               <li>Deploy the baseline policies first</li>
-              <li>Modify them manually in the Microsoft Intune admin center</li>
-              <li>Create custom policies based on the baseline templates</li>
+              <li>Duplicate the policies in Intune, giving them a customised name</li>
+              <li>Modify the duplicated policies as needed</li>
             </ul>
           </div>
         </section>
@@ -135,7 +148,7 @@ const Documentation = ({ onBack }) => {
           <div className="troubleshoot-item">
             <h3>Authentication Issues</h3>
             <ul>
-              <li>Ensure your account has Intune administrator permissions</li>
+              <li>Ensure your account has the necessary permissions</li>
               <li>Try logging out and logging back in</li>
               <li>Check if your tenant allows the required Graph API permissions</li>
               <li>Verify that pop-ups are not blocked in your browser</li>
@@ -170,11 +183,10 @@ const Documentation = ({ onBack }) => {
           <div className="tech-info">
             <h3>Policy Sources</h3>
             <p>
-              All policies are sourced from the 
+              All policies are loaded automatically from the 
               <a href="https://github.com/SkipToTheEndpoint/OpenIntuneBaseline" target="_blank" rel="noopener noreferrer">
-                OpenIntuneBaseline repository <ExternalLink size={14} />
-              </a>. 
-              This community-driven project provides standardized, security-focused baseline configurations for Microsoft Intune.
+                OpenIntuneBaseline GitHub Repo<ExternalLink size={14} /> via the GitHub API.
+              </a>.
             </p>
           </div>
 
@@ -195,15 +207,6 @@ const Documentation = ({ onBack }) => {
               This application runs entirely in your browser. No policy data or tenant information is stored on external servers. 
               Authentication is handled directly through Microsoft's MSAL library, and all API calls go directly to Microsoft Graph.
             </p>
-          </div>
-
-          <div className="tech-info">
-            <h3>Supported Platforms</h3>
-            <ul>
-              <li><strong>Windows:</strong> Windows 10/11 and Windows 365</li>
-              <li><strong>macOS:</strong> macOS devices managed through Intune</li>
-              <li><strong>Browser:</strong> Modern browsers supporting ES6+ and MSAL.js</li>
-            </ul>
           </div>
         </section>
 
@@ -237,8 +240,8 @@ const Documentation = ({ onBack }) => {
               <h3>Community</h3>
               <ul>
                 <li>
-                  <a href="https://techcommunity.microsoft.com/t5/microsoft-intune/ct-p/MicrosoftIntune" target="_blank" rel="noopener noreferrer">
-                    Microsoft Intune Tech Community <ExternalLink size={14} />
+                  <a href="https://discord.com/invite/winadmins" target="_blank" rel="noopener noreferrer">
+                    WinAdmins Discord <ExternalLink size={14} />
                   </a>
                 </li>
                 <li>
