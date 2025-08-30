@@ -28,6 +28,7 @@ jobs:
         NODE_ENV: production
         GITHUB_ACTIONS: true
         VITE_ENTRA_CLIENT_ID: ${{ vars.ENTRA_CLIENT_ID }}
+        VITE_ENTRA_TENANT_ID: ${{ vars.ENTRA_TENANT_ID }}
       
     - name: Setup Pages
       uses: actions/configure-pages@v5
