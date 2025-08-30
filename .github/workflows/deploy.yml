@@ -36,6 +36,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          NODE_ENV: production
           # Provide required Vite env vars via Repository Variables
           VITE_ENTRA_CLIENT_ID: ${{ vars.VITE_ENTRA_CLIENT_ID }}
           VITE_ENTRA_TENANT_ID: ${{ vars.VITE_ENTRA_TENANT_ID }}

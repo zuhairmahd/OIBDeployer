@@ -4,7 +4,7 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/', // Root path for custom domain
+  base: process.env.NODE_ENV === 'production' ? '/OIBDeployer/' : '/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
